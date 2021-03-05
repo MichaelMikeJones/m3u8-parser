@@ -1,7 +1,7 @@
 /**
  * @file m3u8/parse-stream.js
  */
-import Stream from '@videojs/vhs-utils/es/stream.js';
+import Stream from '@videojs/vhs-utils/cjs/stream.js';
 
 const TAB = String.fromCharCode(0x09);
 

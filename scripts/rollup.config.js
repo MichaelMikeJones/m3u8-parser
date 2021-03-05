@@ -16,9 +16,9 @@ const options = {
     // require cjs module
     defaults.replace = replace({
       // single quote replace
-      "require('@videojs/vhs-utils/es": "require('@videojs/vhs-utils/cjs",
+      "from '@videojs/vhs-utils/cjs": "from '@videojs/vhs-utils/es",
       // double quote replace
-      'require("@videojs/vhs-utils/es': 'require("@videojs/vhs-utils/cjs'
+      'from "@videojs/vhs-utils/cjs': 'from "@videojs/vhs-utils/es'
     });
 
     defaults.dataFiles = dataFiles({
