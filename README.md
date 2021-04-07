@@ -1,9 +1,9 @@
 # m3u8-parser
-[![Build Status](https://travis-ci.org/videojs/m3u8-parser.svg?branch=master)](https://travis-ci.org/videojs/m3u8-parser)
-[![Greenkeeper badge](https://badges.greenkeeper.io/videojs/m3u8-parser.svg)](https://greenkeeper.io/)
-[![Slack Status](http://slack.videojs.com/badge.svg)](http://slack.videojs.com)
 
-[![NPM](https://nodei.co/npm/m3u8-parser.png?downloads=true&downloadRank=true)](https://nodei.co/npm/m3u8-parser/)
+
+This is a fork (from [this repository](https://github.com/MichaelMikeJones/m3u8-parser)) with stringifying functionality. You can write the manifest object back to a file.
+
+At the moment only a few tags are supported (see this [section](#stringifying-supported-tag)) beacause this fork is for personal use (it is installable through npm though). I will develop this package to support more tags in the future. Any PR is welcome.
 
 m3u8 parser
 
@@ -25,6 +25,7 @@ m3u8 parser
     - [EXT-X-CUE-IN](#ext-x-cue-in)
   - [Not Yet Supported](#not-yet-supported)
   - [Custom Parsers](#custom-parsers)
+- [Stringifying supported tag](#stringifying-supported-tag)
 - [Including the Parser](#including-the-parser)
   - [`<script>` Tag](#script-tag)
   - [Browserify](#browserify)
@@ -35,13 +36,7 @@ m3u8 parser
 ## Installation
 
 ```sh
-npm install --save m3u8-parser
-```
-
-The npm installation is preferred, but Bower works, too.
-
-```sh
-bower install  --save m3u8-parser
+npm install --save @michaeljones2001/m3u8-parser
 ```
 
 ## Usage
@@ -340,6 +335,14 @@ parser.push(manifest);
 parser.end();
 parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 ```
+
+## Stringifying supported tag
+
+* #EXTM3U
+* #EXT-X-ALLOW-CACHE
+* #EXT-X-VERSION
+* #EXT-X-MEDIA
+* #EXT-X-STREAM-INF
 
 ## Including the Parser
 
