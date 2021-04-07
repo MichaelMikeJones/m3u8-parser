@@ -1,7 +1,7 @@
 # m3u8-parser
 
 
-This is a fork (from [this repository](https://github.com/MichaelMikeJones/m3u8-parser)) with stringifying functionality. You can write the manifest object back to a file.
+This is a fork (from [this repository](https://github.com/videojs/m3u8-parser)) with stringifying functionality. You can write the manifest object back to a file.
 
 At the moment only a few tags are supported (see this [section](#stringifying-supported-tag)) beacause this fork is for personal use (it is installable through npm though). I will develop this package to support more tags in the future. Any PR is welcome.
 
