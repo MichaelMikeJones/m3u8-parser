@@ -97,6 +97,8 @@ export default class ParseStream extends Stream {
     this.tagMappers = [];
   }
 
+  // TODO: add support for #EXT-X-INDEPENDENT-SEGMENTS
+
   /**
    * Parses an additional line of input.
    *

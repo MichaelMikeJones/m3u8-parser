@@ -3,7 +3,7 @@
 
 This is a fork (from [this repository](https://github.com/videojs/m3u8-parser)) with stringifying functionality. You can write the manifest object back to a file.
 
-At the moment only a few tags are supported (see this [section](#stringifying-supported-tag)) beacause this fork is for personal use (it is installable through npm though). I will develop this package to support more tags in the future. Any PR is welcome.
+At the moment only a few tags are supported (see this [section](#stringifying-supported-tag)) beacause this fork is for personal use (it is installable through npm though) but I will develop this package to support more tags in the future. Any PR is welcome.
 
 m3u8 parser
 
@@ -343,6 +343,12 @@ parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 * #EXT-X-VERSION
 * #EXT-X-MEDIA
 * #EXT-X-STREAM-INF
+* #EXT-X-TARGETDURATION
+* #EXT-X-MEDIA-SEQUENCE
+* #EXT-X-PLAYLIST-TYPE
+* #EXTINF
+* #EXT-X-ENDLIST
+* #EXT-X-PROGRAM-DATE-TIME
 
 ## Including the Parser
 

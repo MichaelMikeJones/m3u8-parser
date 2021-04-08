@@ -104,15 +104,33 @@ function handlePlaylists(arrPlaylists) {
   return result;
 }
 
+function handleSegments(segments) {
+
+  let result = '';
+
+  segments.forEach((segment) => {
+
+    let segmentString = `#EXTINF:${segment.duration.toFixed(6)},\n`;
+
+    if (segment.dateTimeString) {
+      segmentString += `#EXT-X-PROGRAM-DATE-TIME:${segment.dateTimeString}\n`;
+    }
+
+    segmentString += segment.uri;
+
+    result += segmentString + '\n';
+  });
+
+  return result;
+
+}
+
 function stringifyTag(key, value) {
   // key indicated the tag
 
   if (key === 'allowCache') {
     return `#EXT-X-ALLOW-CACHE:${value ? 'YES' : 'NO'}\n`;
   } else if (key === 'discontinuityStarts') {
-    // not implemented
-    return '';
-  } else if (key === 'segments') {
     // not implemented
     return '';
   } else if (key === 'version') {
@@ -123,12 +141,43 @@ function stringifyTag(key, value) {
   } else if (key === 'playlists') {
     // handling media groups seperately
     return handlePlaylists(value);
+  } else if (key === 'targetDuration') {
+    return `#EXT-X-TARGETDURATION:${value}\n`;
+  } else if (key === 'mediaSequence') {
+    return `#EXT-X-MEDIA-SEQUENCE:${value}\n`;
+  } else if (key === 'playlistType') {
+    return `#EXT-X-PLAYLIST-TYPE:${value}\n`;
+  } else if (key === 'segments') {
+    // handle segments seperately
+    return handleSegments(value);
+  } else if (key === 'endList') {
+    if (value) {
+      return '#EXT-X-ENDLIST\n';
+    }
+
+    return '';
   }
 
   // unknown tag
   return '';
 
 }
+
+function isEmpty(element) {
+  if (typeof element === 'object' && (element.constructor === Object || element.constructor === Array) && Object.keys(element).length === 0) {
+    // typeof [] === 'object'
+    // Object.keys(["One", "Two", "Three"]) === ["0", "1", "2"]
+    return true;
+  }
+
+  return false;
+}
+
+// EXTM3U is not present, becuase it is not present in manifest object
+// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", "#EXTINF", "#EXT-X-ENDLIST"];
+// #EXT-X-PROGRAM-DATE-TIME will be created in segments
+// below is equivalent in manifest object
+const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'segments', 'endList'];
 
 export default function Writer(manifest) {
 
@@ -140,8 +189,11 @@ export default function Writer(manifest) {
 
   const manifestKeys = Object.keys(manifest);
 
-  manifestKeys.forEach((key) => {
-    stringified += stringifyTag(key, manifest[key]);
+  tagsInOrder.forEach((tag) => {
+    if (manifestKeys.includes(tag) && !isEmpty(manifestKeys[tag])) {
+      // tag === keys in manifestKeys
+      stringified += stringifyTag(tag, manifest[tag]);
+    }
   });
 
   // remove , after :
