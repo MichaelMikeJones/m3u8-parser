@@ -1,3 +1,6 @@
+<a name="5.1.0"></a>
+# [5.1.0](https://github.com/MichaelMikeJones/m3u8-parser/compare/v5.0.2...v5.1.0) (2021-04-08)
+
 <a name="5.0.2"></a>
 ## [5.0.2](https://github.com/MichaelMikeJones/m3u8-parser/compare/v5.0.1...v5.0.2) (2021-04-07)
 
