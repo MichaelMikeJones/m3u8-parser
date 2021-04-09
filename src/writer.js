@@ -109,11 +109,33 @@ function handleSegments(segments) {
   let result = '';
 
   segments.forEach((segment) => {
+    let segmentString = '\n';
 
-    let segmentString = `#EXTINF:${segment.duration.toFixed(6)},\n`;
+    if (segment.discontinuity) {
+      segmentString += '#EXT-X-DISCONTINUITY\n';
+    }
+
+    /*
+      "A Media Playlist MUST indicate an EXT-X-VERSION of 3 or higher if it contains:
+        Floating-point EXTINF duration values." - https://tools.ietf.org/html/rfc8216#section-7
+
+      So, we cannot alter or parse decimal target duration to floating point
+      because it might introduce version incompatibility
+    */
+    segmentString += `#EXTINF:${segment.duration},\n`;
+
+    // TODO: which one should appear first? byterange or program date time?
 
     if (segment.dateTimeString) {
       segmentString += `#EXT-X-PROGRAM-DATE-TIME:${segment.dateTimeString}\n`;
+    }
+
+    if (segment.byterange) {
+      // even though offset is optional in hls specs, but it is always present in manifest object
+      const length = segment.byterange.length;
+      const offset = segment.byterange.offset;
+
+      segmentString += `#EXT-X-BYTERANGE:${length}@${offset}\n`;
     }
 
     segmentString += segment.uri;
@@ -150,6 +172,8 @@ function stringifyTag(key, value) {
   } else if (key === 'segments') {
     // handle segments seperately
     return handleSegments(value);
+  } else if (key === 'discontinuitySequence') {
+    return `#EXT-X-DISCONTINUITY-SEQUENCE:${value}\n`;
   } else if (key === 'endList') {
     if (value) {
       return '#EXT-X-ENDLIST\n';
@@ -174,10 +198,10 @@ function isEmpty(element) {
 }
 
 // EXTM3U is not present, becuase it is not present in manifest object
-// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", "#EXTINF", "#EXT-X-ENDLIST"];
-// #EXT-X-PROGRAM-DATE-TIME will be created in segments
+// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", '#EXT-X-DISCONTINUITY-SEQUENCE', "#EXTINF", "#EXT-X-ENDLIST"];
+// #EXT-X-PROGRAM-DATE-TIME , #EXT-X-BYTERANGE and #EXT-X-DISCONTINUITY will be created in segments
 // below is equivalent in manifest object
-const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'segments', 'endList'];
+const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'discontinuitySequence', 'segments', 'endList'];
 
 export default function Writer(manifest) {
 

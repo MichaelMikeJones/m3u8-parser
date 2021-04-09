@@ -14,6 +14,7 @@ m3u8 parser
 - [Installation](#installation)
 - [Usage](#usage)
   - [Parsed Output](#parsed-output)
+  - [Stringify](#stringify)
 - [Supported Tags](#supported-tags)
   - [Basic Playlist Tags](#basic-playlist-tags)
   - [Media Segment Tags](#media-segment-tags)
@@ -136,6 +137,13 @@ Manifest {
     }
   ]
 }
+```
+
+### Stringify
+
+To stringify a manifest object call `stringify` method. You can directly write the string to a file.
+```javascript
+const stringified = parser.stringify();
 ```
 
 ## Supported Tags
@@ -349,6 +357,9 @@ parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 * #EXTINF
 * #EXT-X-ENDLIST
 * #EXT-X-PROGRAM-DATE-TIME
+* #EXT-X-BYTERANGE
+* #EXT-X-DISCONTINUITY
+* #EXT-X-DISCONTINUITY-SEQUENCE
 
 ## Including the Parser
 
