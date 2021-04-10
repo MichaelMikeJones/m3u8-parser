@@ -1,3 +1,5 @@
+const isEqual = require('lodash.isequal');
+
 const handleMediaGroups = function(obj) {
   const keys = Object.keys(obj);
   let result = '';
@@ -104,12 +106,45 @@ function handlePlaylists(arrPlaylists) {
   return result;
 }
 
+function toHexString(uint32) {
+  return uint32.reduce(
+    (output, elem) =>
+      (output + elem.toString(16)),
+    ''
+  );
+}
+
 function handleSegments(segments) {
 
   let result = '';
+  let lastKey = {};
 
   segments.forEach((segment) => {
     let segmentString = '\n';
+
+    // if segment.key does not exists, it does not mean that no tag should be placed there
+    // it just mean there is no key associated with that segment
+    // As the HLS RFC points out, if we have set an encryption method at some point (maybe segment 30)
+    // and from now on (segment 50) we don't need that (segments are not encrypted anymore),
+    // we cannot just leave it like that. we should add "#EXT-X-KEY:METHOD=NONE" to tell no encrption from now on
+    // more info: https://tools.ietf.org/html/rfc8216#section-4.3.2.4
+
+    // NOTE: if we have #EXT-X-KEY:METHOD=NONE , segment.key won't be present at all
+    // NOTE: encryption for Widevine is not supported in stringifying
+
+    // lodash.isequal is a little bit overkill for this usecase, but I didn't want to
+    // add object equality function. They are confusing and ugly
+    if (segment.key && !isEqual(segment.key, lastKey)) {
+      // segment key exists and is not equel to last key
+      const IV = segment.key.iv ? `,IV=0x${toHexString(segment.key.iv)}` : '';
+
+      segmentString += `#EXT-X-KEY:METHOD=${segment.key.method},URI="${segment.key.uri}"${IV}\n`;
+
+      lastKey = segment.key;
+    } else if (!segment.key && !isEmpty(lastKey)) {
+      // segment.key does not exists and if we have a lastkey, we sould add #EXT-X-KEY:METHOD=NONE
+      segmentString += '#EXT-X-KEY:METHOD=NONE\n';
+    }
 
     if (segment.discontinuity) {
       segmentString += '#EXT-X-DISCONTINUITY\n';
@@ -151,6 +186,7 @@ function stringifyTag(key, value) {
   // key indicated the tag
 
   if (key === 'allowCache') {
+    // FIXME: this tag is deprecated
     return `#EXT-X-ALLOW-CACHE:${value ? 'YES' : 'NO'}\n`;
   } else if (key === 'discontinuityStarts') {
     // not implemented
@@ -174,11 +210,14 @@ function stringifyTag(key, value) {
     return handleSegments(value);
   } else if (key === 'discontinuitySequence') {
     return `#EXT-X-DISCONTINUITY-SEQUENCE:${value}\n`;
+  } else if (key === 'start') {
+    return `#EXT-X-START:TIME-OFFSET=${value.timeOffset},PRECISE=${value.precise}\n`;
   } else if (key === 'endList') {
     if (value) {
       return '#EXT-X-ENDLIST\n';
     }
 
+    // if value is false tag should not be present
     return '';
   }
 
@@ -198,10 +237,10 @@ function isEmpty(element) {
 }
 
 // EXTM3U is not present, becuase it is not present in manifest object
-// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", '#EXT-X-DISCONTINUITY-SEQUENCE', "#EXTINF", "#EXT-X-ENDLIST"];
-// #EXT-X-PROGRAM-DATE-TIME , #EXT-X-BYTERANGE and #EXT-X-DISCONTINUITY will be created in segments
+// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", "#EXT-X-DISCONTINUITY-SEQUENCE", "#EXT-X-START", "#EXTINF", "#EXT-X-ENDLIST"];
+// #EXT-X-PROGRAM-DATE-TIME , #EXT-X-KEY , #EXT-X-BYTERANGE and #EXT-X-DISCONTINUITY will be created in segments
 // below is equivalent in manifest object
-const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'discontinuitySequence', 'segments', 'endList'];
+const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'discontinuitySequence', 'start', 'segments', 'endList'];
 
 export default function Writer(manifest) {
 

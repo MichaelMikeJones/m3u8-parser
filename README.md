@@ -3,7 +3,9 @@
 
 This is a fork (from [this repository](https://github.com/videojs/m3u8-parser)) with stringifying functionality. You can write the manifest object back to a file.
 
-At the moment only a few tags are supported (see this [section](#stringifying-supported-tag)) beacause this fork is for personal use (it is installable through npm though) but I will develop this package to support more tags in the future. Any PR is welcome.
+To see what tags are supported in stringifying see this [section](#stringifying-supported-tag).
+I will develop this package to support more tags in the future. 
+Any PR is welcome.
 
 m3u8 parser
 
@@ -145,6 +147,8 @@ To stringify a manifest object call `stringify` method. You can directly write t
 ```javascript
 const stringified = parser.stringify();
 ```
+**NOTE**: encryption for Widevine is not supported in stringifying
+
 
 ## Supported Tags
 
@@ -360,6 +364,8 @@ parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 * #EXT-X-BYTERANGE
 * #EXT-X-DISCONTINUITY
 * #EXT-X-DISCONTINUITY-SEQUENCE
+* #EXT-X-START
+* #EXT-X-KEY
 
 ## Including the Parser
 
