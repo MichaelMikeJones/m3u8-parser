@@ -1,4 +1,4 @@
-const isEqual = require('lodash.isequal');
+import isEqual from 'lodash.isequal';
 
 const handleMediaGroups = function(obj) {
   const keys = Object.keys(obj);
