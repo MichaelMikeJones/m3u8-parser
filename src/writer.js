@@ -109,7 +109,7 @@ function handlePlaylists(arrPlaylists) {
 function toHexString(uint32) {
   return uint32.reduce(
     (output, elem) =>
-      (output + elem.toString(16)),
+      (output + ('00000000' + elem.toString(16)).slice(-8)),
     ''
   );
 }
