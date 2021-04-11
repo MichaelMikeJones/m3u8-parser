@@ -366,6 +366,7 @@ parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 * #EXT-X-DISCONTINUITY-SEQUENCE
 * #EXT-X-START
 * #EXT-X-KEY
+* #EXT-X-MAP
 
 ## Including the Parser
 

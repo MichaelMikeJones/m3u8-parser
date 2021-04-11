@@ -93,6 +93,11 @@ function handlePlaylists(arrPlaylists) {
         value = `${value.width}x${value.height}`;
       }
 
+      if (attribute === 'FRAME-RATE') {
+        // rounding FRAME-RATE to 3 decimal places
+        value = parseFloat(value).toFixed(3);
+      }
+
       playlistItem += `,${attribute.toUpperCase()}=${isQuoted ? '"' : ''}${value}${isQuoted ? '"' : ''}`;
 
     });
@@ -118,6 +123,7 @@ function handleSegments(segments) {
 
   let result = '';
   let lastKey = {};
+  let lastMap = {};
 
   segments.forEach((segment) => {
     let segmentString = '\n';
@@ -146,6 +152,20 @@ function handleSegments(segments) {
       segmentString += '#EXT-X-KEY:METHOD=NONE\n';
     }
 
+    if (segment.map && !isEqual(segment.map, lastMap)) {
+      // segment map exists and is not equel to last map
+
+      if (typeof segment.map.byterange.offset === 'undefined') {
+        segment.map.byterange.offset = 0;
+      }
+
+      const BYTERANGE = segment.map.byterange ? `,BYTERANGE="${segment.map.byterange.length}@${segment.map.byterange.offset}"` : '';
+
+      segmentString += `#EXT-X-MAP:URI="${segment.map.uri}"${BYTERANGE}\n`;
+
+      lastMap = segment.map;
+    }
+
     if (segment.discontinuity) {
       segmentString += '#EXT-X-DISCONTINUITY\n';
     }
@@ -157,6 +177,8 @@ function handleSegments(segments) {
       So, we cannot alter or parse decimal target duration to floating point
       because it might introduce version incompatibility
     */
+
+    // FIXME: What about name after duration?
     segmentString += `#EXTINF:${segment.duration},\n`;
 
     // TODO: which one should appear first? byterange or program date time?
@@ -184,6 +206,8 @@ function handleSegments(segments) {
 
 function stringifyTag(key, value) {
   // key indicated the tag
+
+  // TODO: should we include #EXT-X-PROGRAM-DATE-TIME as playlist tag?
 
   if (key === 'allowCache') {
     // FIXME: this tag is deprecated
@@ -238,7 +262,7 @@ function isEmpty(element) {
 
 // EXTM3U is not present, becuase it is not present in manifest object
 // ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", "#EXT-X-DISCONTINUITY-SEQUENCE", "#EXT-X-START", "#EXTINF", "#EXT-X-ENDLIST"];
-// #EXT-X-PROGRAM-DATE-TIME , #EXT-X-KEY , #EXT-X-BYTERANGE and #EXT-X-DISCONTINUITY will be created in segments
+// #EXT-X-PROGRAM-DATE-TIME , #EXT-X-KEY , #EXT-X-MAP , #EXT-X-BYTERANGE and #EXT-X-DISCONTINUITY will be created in segments
 // below is equivalent in manifest object
 const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'discontinuitySequence', 'start', 'segments', 'endList'];
 
