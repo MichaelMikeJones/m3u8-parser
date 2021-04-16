@@ -3,6 +3,7 @@ module.exports = {
   mediaSequence: 1,
   playlistType: 'VOD',
   targetDuration: 6,
+  independentSegments: true,
   discontinuitySequence: 0,
   discontinuityStarts: [],
   segments: [

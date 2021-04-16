@@ -1,6 +1,7 @@
 module.exports = {
   allowCache: true,
   discontinuityStarts: [],
+  independentSegments: true,
   mediaGroups: {
     'AUDIO': {
       aud1: {
