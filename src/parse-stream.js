@@ -545,6 +545,16 @@ export default class ParseStream extends Stream {
         this.trigger('data', event);
         return;
       }
+      match = (/^#EXT-X-INDEPENDENT-SEGMENTS$/).exec(newLine);
+      if (match) {
+        event = {
+          type: 'tag',
+          tagType: 'independent-segments'
+        };
+
+        this.trigger('data', event);
+        return;
+      }
       match = (/^#EXT-X-RENDITION-REPORT:(.*)$/).exec(newLine);
       if (match && match[1]) {
         event = {

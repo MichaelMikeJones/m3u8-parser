@@ -208,6 +208,9 @@ export default class Parser extends Stream {
             endlist() {
               this.manifest.endList = true;
             },
+            'independent-segments'() {
+              this.manifest.independentSegments = true;
+            },
             inf() {
               if (!('mediaSequence' in this.manifest)) {
                 this.manifest.mediaSequence = 0;

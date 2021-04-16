@@ -174,6 +174,7 @@ const stringified = parser.stringify();
 * [EXT-X-ENDLIST](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.4)
 * [EXT-X-PLAYLIST-TYPE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.5)
 * [EXT-X-START](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.5.2)
+* [EXT-X-INDEPENDENT-SEGMENTS](https://tools.ietf.org/html/draft-pantos-http-live-streaming-23#section-4.3.5.1)
 
 ### Master Playlist Tags
 
@@ -248,7 +249,6 @@ Example media playlist using `EXT-X-CUE-` tags.
 * [EXT-X-I-FRAME-STREAM-INF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.3)
 * [EXT-X-SESSION-DATA](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.4)
 * [EXT-X-SESSION-KEY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.5)
-* [EXT-X-INDEPENDENT-SEGMENTS](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.5.1)
 
 ### Custom Parsers
 
@@ -367,6 +367,7 @@ parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 * #EXT-X-START
 * #EXT-X-KEY
 * #EXT-X-MAP
+* #EXT-X-INDEPENDENT-SEGMENTS
 
 ## Including the Parser
 

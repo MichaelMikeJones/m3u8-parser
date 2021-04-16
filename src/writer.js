@@ -243,6 +243,8 @@ function stringifyTag(key, value) {
 
     // if value is false tag should not be present
     return '';
+  } else if (key === 'independentSegments') {
+    return '#EXT-X-INDEPENDENT-SEGMENTS\n';
   }
 
   // unknown tag
@@ -261,10 +263,10 @@ function isEmpty(element) {
 }
 
 // EXTM3U is not present, becuase it is not present in manifest object
-// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", "#EXT-X-DISCONTINUITY-SEQUENCE", "#EXT-X-START", "#EXTINF", "#EXT-X-ENDLIST"];
+// ["EXT-X-VERSION", "#EXT-X-MEDIA", "#EXT-X-STREAM-INF", "#EXT-X-TARGETDURATION", "#EXT-X-MEDIA-SEQUENCE", "#EXT-X-PLAYLIST-TYPE", "#EXT-X-DISCONTINUITY-SEQUENCE", "#EXT-X-INDEPENDENT-SEGMENTS", "#EXT-X-START", "#EXTINF", "#EXT-X-ENDLIST"];
 // #EXT-X-PROGRAM-DATE-TIME , #EXT-X-KEY , #EXT-X-MAP , #EXT-X-BYTERANGE and #EXT-X-DISCONTINUITY will be created in segments
 // below is equivalent in manifest object
-const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'discontinuitySequence', 'start', 'segments', 'endList'];
+const tagsInOrder = ['version', 'mediaGroups', 'playlists', 'targetDuration', 'mediaSequence', 'playlistType', 'discontinuitySequence', 'independentSegments', 'start', 'segments', 'endList'];
 
 export default function Writer(manifest) {
 
