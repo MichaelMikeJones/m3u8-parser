@@ -6,7 +6,7 @@
   "module": "dist/m3u8-parser.es.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MichaelMikeJones/m3u8-parser"
+    "url": "https://github.com/miadabdi/m3u8-parser"
   },
   "contributors": [
     {
@@ -22,8 +22,8 @@
       "github": "https://github.com/dmlap"
     },
     {
-      "name": "MichaelMikeJones",
-      "github": "https://github.com/MichaelMikeJones"
+      "name": "Miad Abdi",
+      "github": "https://github.com/miadabdi"
     }
   ],
   "scripts": {
