@@ -1,15 +1,15 @@
 # m3u8-parser
+[![Build Status](https://travis-ci.org/videojs/m3u8-parser.svg?branch=master)](https://travis-ci.org/videojs/m3u8-parser)
+[![Greenkeeper badge](https://badges.greenkeeper.io/videojs/m3u8-parser.svg)](https://greenkeeper.io/)
+[![Slack Status](http://slack.videojs.com/badge.svg)](http://slack.videojs.com)
+
+[![NPM](https://nodei.co/npm/m3u8-parser.png?downloads=true&downloadRank=true)](https://nodei.co/npm/m3u8-parser/)
 
 This is a fork (from [this repository](https://github.com/videojs/m3u8-parser)) with stringifying functionality. You can write the manifest object back to a file.
 
-To see what tags are supported in stringifying see this [section](#stringifying-supported-tag).
-I will develop this package to support more tags in the future.
-Any PR is welcome.
-
-m3u8 parser
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
 
 - [m3u8-parser](#m3u8-parser)
   - [Installation](#installation)
@@ -27,7 +27,6 @@ m3u8 parser
       - [EXT-X-CUE-IN](#ext-x-cue-in)
     - [Not Yet Supported](#not-yet-supported)
     - [Custom Parsers](#custom-parsers)
-  - [Stringifying supported tag](#stringifying-supported-tag)
   - [Including the Parser](#including-the-parser)
     - [`<script>` Tag](#script-tag)
     - [Browserify](#browserify)
@@ -46,19 +45,20 @@ npm install --save @miadabdi/m3u8-parser
 
 ```js
 var manifest = [
-  "#EXTM3U",
-  "#EXT-X-VERSION:3",
-  "#EXT-X-TARGETDURATION:6",
-  "#EXT-X-MEDIA-SEQUENCE:0",
-  "#EXT-X-DISCONTINUITY-SEQUENCE:0",
-  "#EXTINF:6,",
-  "0.ts",
-  "#EXTINF:6,",
-  "1.ts",
-  "#EXTINF:6,",
-  "2.ts",
-  "#EXT-X-ENDLIST",
-].join("\n");
+  '#EXTM3U',
+  '#EXT-X-VERSION:3',
+  '#EXT-X-TARGETDURATION:6',
+  '#EXT-X-MEDIA-SEQUENCE:0',
+  '#EXT-X-DISCONTINUITY-SEQUENCE:0',
+  '#EXTINF:6,',
+  '0.ts',
+  '#EXTINF:6,',
+  '1.ts',
+  '#EXT-X-PROGRAM-DATE-TIME:2019-02-14T02:14:00.106Z'
+  '#EXTINF:6,',
+  '2.ts',
+  '#EXT-X-ENDLIST'
+].join('\n');
 
 var parser = new m3u8Parser.Parser();
 
@@ -77,6 +77,7 @@ Manifest {
   allowCache: boolean,
   endList: boolean,
   mediaSequence: number,
+  dateRanges: [],
   discontinuitySequence: number,
   playlistType: string,
   custom: {},
@@ -111,11 +112,13 @@ Manifest {
   discontinuityStarts: [number],
   segments: [
     {
+      title: string,
       byterange: {
         length: number,
         offset: number
       },
       duration: number,
+      programDateTime:  number,
       attributes: {},
       discontinuity: number,
       uri: string,
@@ -160,27 +163,29 @@ const stringified = parser.stringify();
 
 ### Media Segment Tags
 
-- [EXTINF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.1)
-- [EXT-X-BYTERANGE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.2)
-- [EXT-X-DISCONTINUITY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.3)
-- [EXT-X-KEY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.4)
-- [EXT-X-MAP](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.5)
-- [EXT-X-PROGRAM-DATE-TIME](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.6)
+* [EXTINF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.1)
+* [EXT-X-BYTERANGE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.2)
+* [EXT-X-DISCONTINUITY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.3)
+* [EXT-X-KEY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.4)
+* [EXT-X-MAP](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.5)
+* [EXT-X-PROGRAM-DATE-TIME](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.6)
+* [EXT-X-DATERANGE](https://datatracker.ietf.org/doc/html/draft-pantos-http-live-streaming-23#section-4.3.2.7)
 
 ### Media Playlist Tags
 
-- [EXT-X-TARGETDURATION](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.1)
-- [EXT-X-MEDIA-SEQUENCE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.2)
-- [EXT-X-DISCONTINUITY-SEQUENCE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.3)
-- [EXT-X-ENDLIST](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.4)
-- [EXT-X-PLAYLIST-TYPE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.5)
-- [EXT-X-START](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.5.2)
-- [EXT-X-INDEPENDENT-SEGMENTS](https://tools.ietf.org/html/draft-pantos-http-live-streaming-23#section-4.3.5.1)
+* [EXT-X-TARGETDURATION](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.1)
+* [EXT-X-MEDIA-SEQUENCE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.2)
+* [EXT-X-DISCONTINUITY-SEQUENCE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.3)
+* [EXT-X-ENDLIST](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.4)
+* [EXT-X-PLAYLIST-TYPE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.5)
+* [EXT-X-START](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.5.2)
+* [EXT-X-INDEPENDENT-SEGMENTS](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.5.1)
 
 ### Master Playlist Tags
 
-- [EXT-X-MEDIA](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.1)
-- [EXT-X-STREAM-INF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.2)
+* [EXT-X-MEDIA](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.1)
+* [EXT-X-STREAM-INF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.2)
+* [EXT-X-CONTENT-STEERING](https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis#section-4.4.6.6)
 
 ### Experimental Tags
 
@@ -245,11 +250,10 @@ Example media playlist using `EXT-X-CUE-` tags.
 
 ### Not Yet Supported
 
-- [EXT-X-DATERANGE](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.2.7)
-- [EXT-X-I-FRAMES-ONLY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.6)
-- [EXT-X-I-FRAME-STREAM-INF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.3)
-- [EXT-X-SESSION-DATA](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.4)
-- [EXT-X-SESSION-KEY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.5)
+* [EXT-X-I-FRAMES-ONLY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.3.6)
+* [EXT-X-I-FRAME-STREAM-INF](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.3)
+* [EXT-X-SESSION-DATA](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.4)
+* [EXT-X-SESSION-KEY](http://tools.ietf.org/html/draft-pantos-http-live-streaming#section-4.3.4.5)
 
 ### Custom Parsers
 
@@ -257,115 +261,97 @@ To add a parser for a non-standard tag the parser object allows for the specific
 
 ```js
 const manifest = [
-  "#EXTM3U",
-  "#EXT-X-VERSION:3",
-  "#VOD-FRAMERATE:29.97",
-  "",
-].join("\n");
+  '#EXTM3U',
+  '#EXT-X-VERSION:3',
+  '#VOD-FRAMERATE:29.97',
+  ''
+].join('\n');
 
 const parser = new m3u8Parser.Parser();
 parser.addParser({
   expression: /^#VOD-FRAMERATE/,
-  customType: "framerate",
+  customType: 'framerate'
 });
 
 parser.push(manifest);
 parser.end();
-parser.manifest.custom.framerate; // "#VOD-FRAMERATE:29.97"
+parser.manifest.custom.framerate // "#VOD-FRAMERATE:29.97"
 ```
 
 Custom parsers may additionally be provided a data parsing function that take a line and return a value.
 
 ```js
 const manifest = [
-  "#EXTM3U",
-  "#EXT-X-VERSION:3",
-  "#VOD-FRAMERATE:29.97",
-  "",
-].join("\n");
+  '#EXTM3U',
+  '#EXT-X-VERSION:3',
+  '#VOD-FRAMERATE:29.97',
+  ''
+].join('\n');
 
 const parser = new m3u8Parser.Parser();
 parser.addParser({
   expression: /^#VOD-FRAMERATE/,
-  customType: "framerate",
-  dataParser: function (line) {
-    return parseFloat(line.split(":")[1]);
-  },
+  customType: 'framerate',
+  dataParser: function(line) {
+    return parseFloat(line.split(':')[1]);
+  }
 });
 
 parser.push(manifest);
 parser.end();
-parser.manifest.custom.framerate; // 29.97
+parser.manifest.custom.framerate // 29.97
 ```
 
 Custom parsers may also extract data at a segment level by passing `segment: true` to the options object. Having a segment level custom parser will add a `custom` object to the segment data.
 
 ```js
 const manifest = [
-  "#EXTM3U",
-  "#VOD-TIMING:1511816599485",
-  "#EXTINF:8.0,",
-  "ex1.ts",
-  "",
-].join("\n");
+    '#EXTM3U',
+    '#VOD-TIMING:1511816599485',
+    '#EXTINF:8.0,',
+    'ex1.ts',
+    ''
+  ].join('\n');
 
 const parser = new m3u8Parser.Parser();
 parser.addParser({
   expression: /#VOD-TIMING/,
-  customType: "vodTiming",
-  segment: true,
+  customType: 'vodTiming',
+  segment: true
 });
 
 parser.push(manifest);
 parser.end();
-parser.manifest.segments[0].custom.vodTiming; // #VOD-TIMING:1511816599485
+parser.manifest.segments[0].custom.vodTiming // #VOD-TIMING:1511816599485
 ```
 
 Custom parsers may also map a tag to another tag. The old tag will not be replaced and all matching registered mappers and parsers will be executed.
-
 ```js
-const manifest = ["#EXTM3U", "#EXAMPLE", "#EXTINF:8.0,", "ex1.ts", ""].join(
-  "\n"
-);
+const manifest = [
+    '#EXTM3U',
+    '#EXAMPLE',
+    '#EXTINF:8.0,',
+    'ex1.ts',
+    ''
+  ].join('\n');
 
 const parser = new m3u8Parser.Parser();
 parser.addTagMapper({
   expression: /#EXAMPLE/,
   map(line) {
     return `#NEW-TAG:123`;
-  },
+  }
 });
 parser.addParser({
   expression: /#NEW-TAG/,
-  customType: "mappingExample",
-  segment: true,
+  customType: 'mappingExample',
+  segment: true
 });
 
 parser.push(manifest);
 parser.end();
-parser.manifest.segments[0].custom.mappingExample; // #NEW-TAG:123
+parser.manifest.segments[0].custom.mappingExample // #NEW-TAG:123
 ```
-
-## Stringifying supported tag
-
-- #EXTM3U
-- #EXT-X-ALLOW-CACHE
-- #EXT-X-VERSION
-- #EXT-X-MEDIA
-- #EXT-X-STREAM-INF
-- #EXT-X-TARGETDURATION
-- #EXT-X-MEDIA-SEQUENCE
-- #EXT-X-PLAYLIST-TYPE
-- #EXTINF
-- #EXT-X-ENDLIST
-- #EXT-X-PROGRAM-DATE-TIME
-- #EXT-X-BYTERANGE
-- #EXT-X-DISCONTINUITY
-- #EXT-X-DISCONTINUITY-SEQUENCE
-- #EXT-X-START
-- #EXT-X-KEY
-- #EXT-X-MAP
-- #EXT-X-INDEPENDENT-SEGMENTS
 
 ## Including the Parser
 
@@ -393,9 +379,8 @@ var parser = new m3u8Parser.Parser();
 ```
 
 With ES6:
-
 ```js
-import { Parser } from "m3u8-parser";
+import { Parser } from 'm3u8-parser';
 
 const parser = new Parser();
 ```

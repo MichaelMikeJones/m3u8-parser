@@ -1,9 +1,9 @@
 module.exports = {
   allowCache: true,
+  dateRanges: [],
   mediaSequence: 1,
   playlistType: 'VOD',
   targetDuration: 6,
-  independentSegments: true,
   discontinuitySequence: 0,
   discontinuityStarts: [],
   segments: [
@@ -41,5 +41,6 @@ module.exports = {
     }
   ],
   endList: true,
-  version: 7
+  version: 7,
+  independentSegments: true
 };
