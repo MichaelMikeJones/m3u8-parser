@@ -1,11 +1,73 @@
 /**
  * @file m3u8/parser.js
  */
-import Stream from '@videojs/vhs-utils/es/stream.js';
 import decodeB64ToUint8Array from '@videojs/vhs-utils/es/decode-b64-to-uint8-array.js';
+import Stream from '@videojs/vhs-utils/es/stream.js';
 import LineStream from './line-stream';
 import ParseStream from './parse-stream';
-import Writer from './writer';
+
+const camelCase = (str) => str
+  .toLowerCase()
+  .replace(/-(\w)/g, (a) => a[1].toUpperCase());
+
+const camelCaseKeys = function(attributes) {
+  const result = {};
+
+  Object.keys(attributes).forEach(function(key) {
+    result[camelCase(key)] = attributes[key];
+  });
+
+  return result;
+};
+
+// set SERVER-CONTROL hold back based upon targetDuration and partTargetDuration
+// we need this helper because defaults are based upon targetDuration and
+// partTargetDuration being set, but they may not be if SERVER-CONTROL appears before
+// target durations are set.
+const setHoldBack = function(manifest) {
+  const {serverControl, targetDuration, partTargetDuration} = manifest;
+
+  if (!serverControl) {
+    return;
+  }
+
+  const tag = '#EXT-X-SERVER-CONTROL';
+  const hb = 'holdBack';
+  const phb = 'partHoldBack';
+  const minTargetDuration = targetDuration && targetDuration * 3;
+  const minPartDuration = partTargetDuration && partTargetDuration * 2;
+
+  if (targetDuration && !serverControl.hasOwnProperty(hb)) {
+    serverControl[hb] = minTargetDuration;
+    this.trigger('info', {
+      message: `${tag} defaulting HOLD-BACK to targetDuration * 3 (${minTargetDuration}).`
+    });
+  }
+
+  if (minTargetDuration && serverControl[hb] < minTargetDuration) {
+    this.trigger('warn', {
+      message: `${tag} clamping HOLD-BACK (${serverControl[hb]}) to targetDuration * 3 (${minTargetDuration})`
+    });
+    serverControl[hb] = minTargetDuration;
+  }
+
+  // default no part hold back to part target duration * 3
+  if (partTargetDuration && !serverControl.hasOwnProperty(phb)) {
+    serverControl[phb] = partTargetDuration * 3;
+    this.trigger('info', {
+      message: `${tag} defaulting PART-HOLD-BACK to partTargetDuration * 3 (${serverControl[phb]}).`
+    });
+  }
+
+  // if part hold back is too small default it to part target duration * 2
+  if (partTargetDuration && serverControl[phb] < (minPartDuration)) {
+    this.trigger('warn', {
+      message: `${tag} clamping PART-HOLD-BACK (${serverControl[phb]}) to partTargetDuration * 2 (${minPartDuration}).`
+    });
+
+    serverControl[phb] = minPartDuration;
+  }
+};
 
 const camelCase = (str) => str
   .toLowerCase()
@@ -98,6 +160,8 @@ export default class Parser extends Stream {
     this.parseStream = new ParseStream();
     this.lineStream.pipe(this.parseStream);
 
+    this.lastProgramDateTime = null;
+
     /* eslint-disable consistent-this */
     const self = this;
     /* eslint-enable consistent-this */
@@ -125,6 +189,7 @@ export default class Parser extends Stream {
     this.manifest = {
       allowCache: true,
       discontinuityStarts: [],
+      dateRanges: [],
       segments: []
     };
     // keep track of the last seen segment's byte range end, as segments are not required
@@ -133,6 +198,7 @@ export default class Parser extends Stream {
     let lastByterangeEnd = 0;
     // keep track of the last seen part's byte range end.
     let lastPartByterangeEnd = 0;
+    const dateRangeTags = {};
 
     this.on('end', () => {
       // only add preloadSegment if we don't yet have a uri for it.
@@ -224,6 +290,11 @@ export default class Parser extends Stream {
                   message: 'defaulting discontinuity sequence to zero'
                 });
               }
+
+              if (entry.title) {
+                currentUri.title = entry.title;
+              }
+
               if (entry.duration > 0) {
                 currentUri.duration = entry.duration;
               }
@@ -253,6 +324,28 @@ export default class Parser extends Stream {
                 this.trigger('warn', {
                   message: 'ignoring key declaration without URI'
                 });
+                return;
+              }
+
+              if (entry.attributes.KEYFORMAT === 'com.apple.streamingkeydelivery') {
+                this.manifest.contentProtection = this.manifest.contentProtection || {};
+
+                // TODO: add full support for this.
+                this.manifest.contentProtection['com.apple.fps.1_0'] = {
+                  attributes: entry.attributes
+                };
+
+                return;
+              }
+
+              if (entry.attributes.KEYFORMAT === 'com.microsoft.playready') {
+                this.manifest.contentProtection = this.manifest.contentProtection || {};
+
+                // TODO: add full support for this.
+                this.manifest.contentProtection['com.microsoft.playready'] = {
+                  uri: entry.attributes.URI
+                };
+
                 return;
               }
 
@@ -290,16 +383,15 @@ export default class Parser extends Stream {
 
                 // if Widevine key attributes are valid, store them as `contentProtection`
                 // on the manifest to emulate Widevine tag structure in a DASH mpd
-                this.manifest.contentProtection = {
-                  'com.widevine.alpha': {
-                    attributes: {
-                      schemeIdUri: entry.attributes.KEYFORMAT,
-                      // remove '0x' from the key id string
-                      keyId: entry.attributes.KEYID.substring(2)
-                    },
-                    // decode the base64-encoded PSSH box
-                    pssh: decodeB64ToUint8Array(entry.attributes.URI.split(',')[1])
-                  }
+                this.manifest.contentProtection = this.manifest.contentProtection || {};
+                this.manifest.contentProtection['com.widevine.alpha'] = {
+                  attributes: {
+                    schemeIdUri: entry.attributes.KEYFORMAT,
+                    // remove '0x' from the key id string
+                    keyId: entry.attributes.KEYID.substring(2)
+                  },
+                  // decode the base64-encoded PSSH box
+                  pssh: decodeB64ToUint8Array(entry.attributes.URI.split(',')[1])
                 };
                 return;
               }
@@ -355,6 +447,10 @@ export default class Parser extends Stream {
               }
               if (entry.byterange) {
                 currentMap.byterange = entry.byterange;
+              }
+
+              if (key) {
+                currentMap.key = key;
               }
             },
             'stream-inf'() {
@@ -437,9 +533,24 @@ export default class Parser extends Stream {
                 this.manifest.dateTimeString = entry.dateTimeString;
                 this.manifest.dateTimeObject = entry.dateTimeObject;
               }
-
               currentUri.dateTimeString = entry.dateTimeString;
               currentUri.dateTimeObject = entry.dateTimeObject;
+
+              const { lastProgramDateTime } = this;
+
+              this.lastProgramDateTime = new Date(entry.dateTimeString).getTime();
+
+              // We should extrapolate Program Date Time backward only during first program date time occurrence.
+              // Once we have at least one program date time point, we can always extrapolate it forward using lastProgramDateTime reference.
+              if (lastProgramDateTime === null) {
+                // Extrapolate Program Date Time backward
+                // Since it is first program date time occurrence we're assuming that
+                // all this.manifest.segments have no program date time info
+                this.manifest.segments.reduceRight((programDateTime, segment) => {
+                  segment.programDateTime = programDateTime - (segment.duration * 1000);
+                  return segment.programDateTime;
+                }, this.lastProgramDateTime);
+              }
             },
             targetduration() {
               if (!isFinite(entry.duration) || entry.duration < 0) {
@@ -610,6 +721,81 @@ export default class Parser extends Stream {
               }
 
               setHoldBack.call(this, this.manifest);
+            },
+            'daterange'() {
+              this.manifest.dateRanges.push(camelCaseKeys(entry.attributes));
+              const index = this.manifest.dateRanges.length - 1;
+
+              this.warnOnMissingAttributes_(
+                `#EXT-X-DATERANGE #${index}`,
+                entry.attributes,
+                ['ID', 'START-DATE']
+              );
+              const dateRange = this.manifest.dateRanges[index];
+
+              if (dateRange.endDate && dateRange.startDate && new Date(dateRange.endDate) < new Date(dateRange.startDate)) {
+                this.trigger('warn', {
+                  message: 'EXT-X-DATERANGE END-DATE must be equal to or later than the value of the START-DATE'
+                });
+              }
+              if (dateRange.duration && dateRange.duration < 0) {
+                this.trigger('warn', {
+                  message: 'EXT-X-DATERANGE DURATION must not be negative'
+                });
+              }
+              if (dateRange.plannedDuration && dateRange.plannedDuration < 0) {
+                this.trigger('warn', {
+                  message: 'EXT-X-DATERANGE PLANNED-DURATION must not be negative'
+                });
+              }
+              const endOnNextYes = !!dateRange.endOnNext;
+
+              if (endOnNextYes && !dateRange.class) {
+                this.trigger('warn', {
+                  message: 'EXT-X-DATERANGE with an END-ON-NEXT=YES attribute must have a CLASS attribute'
+                });
+              }
+              if (endOnNextYes && (dateRange.duration || dateRange.endDate)) {
+                this.trigger('warn', {
+                  message: 'EXT-X-DATERANGE with an END-ON-NEXT=YES attribute must not contain DURATION or END-DATE attributes'
+                });
+              }
+              if (dateRange.duration && dateRange.endDate) {
+                const startDate = dateRange.startDate;
+                const newDateInSeconds = startDate.getTime() + (dateRange.duration * 1000);
+
+                this.manifest.dateRanges[index].endDate = new Date(newDateInSeconds);
+              }
+              if (!dateRangeTags[dateRange.id]) {
+                dateRangeTags[dateRange.id] = dateRange;
+              } else {
+                for (const attribute in dateRangeTags[dateRange.id]) {
+                  if (!!dateRange[attribute] && JSON.stringify(dateRangeTags[dateRange.id][attribute]) !== JSON.stringify(dateRange[attribute])) {
+                    this.trigger('warn', {
+                      message: 'EXT-X-DATERANGE tags with the same ID in a playlist must have the same attributes values'
+                    });
+                    break;
+                  }
+                }
+                // if tags with the same ID do not have conflicting attributes, merge them
+                const dateRangeWithSameId = this.manifest.dateRanges.findIndex((dateRangeToFind) => dateRangeToFind.id === dateRange.id);
+
+                this.manifest.dateRanges[dateRangeWithSameId] = Object.assign(this.manifest.dateRanges[dateRangeWithSameId], dateRange);
+                dateRangeTags[dateRange.id] = Object.assign(dateRangeTags[dateRange.id], dateRange);
+                // after merging, delete the duplicate dateRange that was added last
+                this.manifest.dateRanges.pop();
+              }
+            },
+            'independent-segments'() {
+              this.manifest.independentSegments = true;
+            },
+            'content-steering'() {
+              this.manifest.contentSteering = camelCaseKeys(entry.attributes);
+              this.warnOnMissingAttributes_(
+                '#EXT-X-CONTENT-STEERING',
+                entry.attributes,
+                ['SERVER-URI']
+              );
             }
           })[entry.tagType] || noop).call(self);
         },
@@ -636,6 +822,12 @@ export default class Parser extends Stream {
 
           // reset the last byterange end as it needs to be 0 between parts
           lastPartByterangeEnd = 0;
+
+          // Once we have at least one program date time we can always extrapolate it forward
+          if (this.lastProgramDateTime !== null) {
+            currentUri.programDateTime = this.lastProgramDateTime;
+            this.lastProgramDateTime += currentUri.duration * 1000;
+          }
 
           // prepare for the next URI
           currentUri = {};
@@ -689,7 +881,13 @@ export default class Parser extends Stream {
   end() {
     // flush any buffered input
     this.lineStream.push('\n');
+    if (this.manifest.dateRanges.length && this.lastProgramDateTime === null) {
+      this.trigger('warn', {
+        message: 'A playlist with EXT-X-DATERANGE tag must contain atleast one EXT-X-PROGRAM-DATE-TIME tag'
+      });
+    }
 
+    this.lastProgramDateTime = null;
     this.trigger('end');
   }
   /**
@@ -697,7 +895,7 @@ export default class Parser extends Stream {
    *
    * @param {Object}   options              a map of options for the added parser
    * @param {RegExp}   options.expression   a regular expression to match the custom header
-   * @param {string}   options.type         the type to register to the output
+   * @param {string}   options.customType   the custom type to register to the output
    * @param {Function} [options.dataParser] function to parse the line into an object
    * @param {boolean}  [options.segment]    should tag data be attached to the segment object
    */
@@ -714,9 +912,4 @@ export default class Parser extends Stream {
   addTagMapper(options) {
     this.parseStream.addTagMapper(options);
   }
-
-  stringify() {
-    return Writer(this.manifest);
-  }
-
 }
