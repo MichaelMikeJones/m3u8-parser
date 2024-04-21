@@ -5,6 +5,7 @@ import decodeB64ToUint8Array from "@videojs/vhs-utils/es/decode-b64-to-uint8-arr
 import Stream from "@videojs/vhs-utils/es/stream.js";
 import LineStream from "./line-stream";
 import ParseStream from "./parse-stream";
+import Writer from "./writer";
 
 // const camelCase = (str) =>
 //   str.toLowerCase().replace(/-(\w)/g, (a) => a[1].toUpperCase());
@@ -994,5 +995,9 @@ export default class Parser extends Stream {
    */
   addTagMapper(options) {
     this.parseStream.addTagMapper(options);
+  }
+
+  stringify() {
+    return Writer(this.manifest);
   }
 }
